@@ -1,0 +1,4 @@
+body {background: #f4f6f9; font-family: Arial, sans-serif;}
+.navbar {background: #343a40; padding: 10px;}
+.navbar a {color: #fff; margin-right: 15px; text-decoration: none;}
+.navbar a:hover {text-decoration: underline;}

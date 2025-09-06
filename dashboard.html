@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow p-4">
+    <h3 class="text-center">Welcome, {{ username }} 🎉</h3>
+    <form method="POST" action="/add" class="row g-3 mt-3">
+        <div class="col-md-5">
+            <input type="text" name="website" class="form-control" placeholder="Website / App Name" required>
+        </div>
+        <div class="col-md-5">
+            <input type="text" name="password" class="form-control" placeholder="Password" required>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">➕ Add</button>
+        </div>
+    </form>
+    <h4 class="mt-4">🔒 Saved Passwords</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Website</th>
+                <th>Password</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for site, password in passwords %}
+            <tr>
+                <td>{{ site }}</td>
+                <td>{{ password }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
