@@ -6,7 +6,24 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-# ------------------- USER & ENCRYPTION ------------------- #
+# ------------------- ENCRYPTION ------------------- #
+def load_key():
+    if not os.path.exists("key.key"):
+        key = Fernet.generate_key()
+        with open("key.key", "wb") as f:
+            f.write(key)
+    with open("key.key", "rb") as f:
+        return f.read()
+
+def encrypt_password(password, key):
+    cipher = Fernet(key)
+    return cipher.encrypt(password.encode()).decode()
+
+def decrypt_password(enc_password, key):
+    cipher = Fernet(key)
+    return cipher.decrypt(enc_password.encode()).decode()
+
+# ------------------- USER MANAGEMENT ------------------- #
 def get_users():
     if not os.path.exists("users.txt"):
         return {}
@@ -29,6 +46,7 @@ def update_user_pin(username, new_hashed_pin):
         for u, data in users.items():
             f.write(f"{u}||{data['email']}||{data['pin']}\n")
 
+# ------------------- USER KEYS ------------------- #
 def create_user_key(username):
     key = Fernet.generate_key()
     with open(f"{username}_key.key", "wb") as f:
@@ -40,14 +58,6 @@ def load_user_key(username):
         return create_user_key(username)
     with open(f"{username}_key.key", "rb") as f:
         return f.read()
-
-def encrypt_password(password, key):
-    cipher = Fernet(key)
-    return cipher.encrypt(password.encode()).decode()
-
-def decrypt_password(enc_password, key):
-    cipher = Fernet(key)
-    return cipher.decrypt(enc_password.encode()).decode()
 
 # ------------------- PASSWORD GENERATOR ------------------- #
 def generate_password(length=12):
@@ -96,32 +106,41 @@ def login():
 def dashboard():
     if "username" not in session:
         return redirect(url_for("login"))
+    
     username = session["username"]
     key = load_user_key(username)
     filename = f"passwords_{username}.txt"
     passwords = []
+
     if os.path.exists(filename):
         with open(filename, "r") as f:
             for line in f:
                 if "||" in line:
                     site, enc_pass = line.strip().split("||")
-                    dec_pass = decrypt_password(enc_pass, key)
+                    try:
+                        dec_pass = decrypt_password(enc_pass, key)
+                    except:
+                        dec_pass = "Error decrypting"
                     passwords.append({"site": site, "password": dec_pass})
-    return render_template("dashboard.html", username=username, passwords=passwords, generate_password=generate_password)
+
+    return render_template("dashboard.html", username=username, passwords=passwords)
 
 # ---------- ADD PASSWORD ----------
 @app.route("/add", methods=["POST"])
 def add_password():
     if "username" not in session:
         return redirect(url_for("login"))
+    
     username = session["username"]
     key = load_user_key(username)
     filename = f"passwords_{username}.txt"
     site = request.form["website"]
     password = request.form["password"]
     enc_pass = encrypt_password(password, key)
+    
     with open(filename, "a") as f:
         f.write(f"{site}||{enc_pass}\n")
+    
     flash(f"Password added for {site} ✅")
     return redirect(url_for("dashboard"))
 
@@ -130,16 +149,20 @@ def add_password():
 def delete_password(site):
     if "username" not in session:
         return redirect(url_for("login"))
+    
     username = session["username"]
+    key = load_user_key(username)
     filename = f"passwords_{username}.txt"
-    lines = []
+    passwords = []
+    
     if os.path.exists(filename):
         with open(filename, "r") as f:
-            lines = f.readlines()
+            passwords = f.readlines()
     with open(filename, "w") as f:
-        for line in lines:
+        for line in passwords:
             if not line.startswith(site + "||"):
                 f.write(line)
+    
     flash(f"Deleted password for {site} ✅")
     return redirect(url_for("dashboard"))
 
@@ -148,18 +171,21 @@ def delete_password(site):
 def edit_password(site):
     if "username" not in session:
         return redirect(url_for("login"))
+    
     username = session["username"]
     key = load_user_key(username)
     filename = f"passwords_{username}.txt"
-    lines = []
+    passwords = []
+    
     if os.path.exists(filename):
         with open(filename, "r") as f:
-            lines = f.readlines()
+            passwords = f.readlines()
+    
     if request.method == "POST":
         new_pass = request.form["password"]
         enc_pass = encrypt_password(new_pass, key)
         with open(filename, "w") as f:
-            for line in lines:
+            for line in passwords:
                 s, _ = line.strip().split("||")
                 if s == site:
                     f.write(f"{site}||{enc_pass}\n")
@@ -167,11 +193,13 @@ def edit_password(site):
                     f.write(line)
         flash(f"Password updated for {site} ✅")
         return redirect(url_for("dashboard"))
+    
     current_pass = ""
-    for line in lines:
+    for line in passwords:
         if line.startswith(site + "||"):
             _, enc_pass = line.strip().split("||")
             current_pass = decrypt_password(enc_pass, key)
+    
     return render_template("edit.html", site=site, password=current_pass)
 
 # ---------- LOGOUT ----------
@@ -194,6 +222,12 @@ def reset_pin():
         update_user_pin(username, new_hashed_pin)
         return render_template("reset.html", username=username, new_pin=new_pin)
     return render_template("reset.html")
+
+# ---------- PASSWORD GENERATOR ROUTE ----------
+@app.route("/generate_password")
+def generate_pass():
+    password = generate_password(16)
+    return password
 
 # ------------------- RUN APP ------------------- #
 if __name__ == "__main__":
