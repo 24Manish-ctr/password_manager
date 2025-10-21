@@ -1,34 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card shadow p-4">
-    <h3 class="text-center">Welcome, {{ username }} 🎉</h3>
-    <form method="POST" action="/add" class="row g-3 mt-3">
-        <div class="col-md-5">
-            <input type="text" name="website" class="form-control" placeholder="Website / App Name" required>
-        </div>
-        <div class="col-md-5">
-            <input type="text" name="password" class="form-control" placeholder="Password" required>
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">➕ Add</button>
-        </div>
-    </form>
-    <h4 class="mt-4">🔒 Saved Passwords</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Website</th>
-                <th>Password</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for site, password in passwords %}
-            <tr>
-                <td>{{ site }}</td>
-                <td>{{ password }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+<h2>🔒 Saved Passwords</h2>
+
+<!-- Password Generator Form -->
+<form action="{{ url_for('add_password') }}" method="POST">
+    <input type="text" name="website" placeholder="Website" required>
+    <input type="text" name="password" id="password" placeholder="Password" required>
+    <button type="button" onclick="document.getElementById('password').value='{{ generate_password() }}'">Generate</button>
+    <button type="submit">Add</button>
+</form>
+
+<!-- Search Bar -->
+<input type="text" id="search" placeholder="Search website..." onkeyup="filterTable()">
+
+<!-- Saved Passwords Table -->
+<table border="1">
+    <tr>
+        <th>Website</th>
+        <th>Password</th>
+        <th>Actions</th>
+    </tr>
+    {% for pw in passwords %}
+    <tr>
+        <td>{{ pw.site }}</td>
+        <td>
+            <span id="pw-{{ pw.site }}" style="display:none">{{ pw.password }}</span>
+            <button type="button" onclick="togglePassword('{{ pw.site }}')">View</button>
+        </td>
+        <td>
+            <a href="{{ url_for('edit_password', site=pw.site) }}">Edit</a> |
+            <form action="{{ url_for('delete_password', site=pw.site) }}" method="POST" style="display:inline;">
+                <button type="submit">Delete</button>
+            </form> |
+            <button onclick="navigator.clipboard.writeText('{{ pw.password }}')">Copy</button>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<script>
+function filterTable() {
+    let input = document.getElementById('search').value.toLowerCase();
+    let rows = document.querySelectorAll('table tr');
+    rows.forEach((row, index) => {
+        if(index === 0) return;
+        let site = row.cells[0].textContent.toLowerCase();
+        row.style.display = site.includes(input) ? '' : 'none';
+    });
+}
+
+function togglePassword(site) {
+    let el = document.getElementById('pw-' + site);
+    if(el.style.display === 'none') {
+        el.style.display = 'inline';
+    } else {
+        el.style.display = 'none';
+    }
+}
+</script>
 {% endblock %}
