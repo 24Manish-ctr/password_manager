@@ -33,4 +33,17 @@
         </td>
     </tr>
     {% endfor %}
-</table
+</table>
+
+<script>
+function filterTable() {
+    let input = document.getElementById('search').value.toLowerCase();
+    let rows = document.querySelectorAll('table tr');
+    rows.forEach((row, index) => {
+        if(index === 0) return; // Skip header
+        let site = row.cells[0].textContent.toLowerCase();
+        row.style.display = site.includes(input) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}
