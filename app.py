@@ -1,7 +1,34 @@
+from flask import Flask, render_template, request, redirect, url_for, session, Response
+import os, random
+from cryptography.fernet import Fernet
 import csv
-from flask import Response
 
-app.route("/export_csv")
+# ------------------------
+# CREATE FLASK APP FIRST
+# ------------------------
+app = Flask(__name__)
+app.secret_key = "supersecretkey"
+
+# ------------------------
+# YOUR FUNCTIONS
+# ------------------------
+def load_key():
+    # ...
+
+def encrypt_password(password, key):
+    # ...
+
+def decrypt_password(enc_password, key):
+    # ...
+
+# ------------------------
+# ROUTES
+# ------------------------
+@app.route("/")
+def home():
+    return render_template("base.html")
+
+@app.route("/export_csv")
 def export_csv():
     if "username" not in session:
         return redirect(url_for("login"))
@@ -21,7 +48,6 @@ def export_csv():
                         dec_pass = "ERROR"
                     output.append([site, dec_pass])
 
-    # Create CSV response
     def generate():
         yield "Website,Password\n"
         for row in output:
