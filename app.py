@@ -1,13 +1,26 @@
-from flask import Flask, render_template, request, redirect, url_for, session, Response
-import os, random, hashlib, csv
+from flask import Flask, render_template, request, redirect, url_for, session
+import os, random
 from cryptography.fernet import Fernet
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-# ------------------------
-# UTILITIES
-# ------------------------
+def load_key():
+    if not os.path.exists("key.key"):
+        key = Fernet.generate_key()
+        with open("key.key", "wb") as f:
+            f.write(key)
+    with open("key.key", "rb") as f:
+        return f.read()
+
+def encrypt_password(password, key):
+    cipher = Fernet(key)
+    return cipher.encrypt(password.encode()).decode()
+
+def decrypt_password(enc_password, key):
+    cipher = Fernet(key)
+    return cipher.decrypt(enc_password.encode()).decode()
+
 def get_users():
     if not os.path.exists("users.txt"):
         return {}
@@ -15,41 +28,21 @@ def get_users():
     with open("users.txt", "r") as f:
         for line in f:
             if "||" in line:
-                u, e, pin_hash, key = line.strip().split("||")
-                users[u] = {"email": e, "pin_hash": pin_hash, "key": key}
+                u, e, p = line.strip().split("||")
+                users[u] = {"email": e, "pin": p}
     return users
 
-def save_user(username, email, pin, key):
-    pin_hash = hashlib.sha256(pin.encode()).hexdigest()
+def save_user(username, email, pin):
     with open("users.txt", "a") as f:
-        f.write(f"{username}||{email}||{pin_hash}||{key}\n")
+        f.write(f"{username}||{email}||{pin}\n")
 
 def update_user_pin(username, new_pin):
     users = get_users()
-    key = users[username]["key"]
-    users[username]["pin_hash"] = hashlib.sha256(new_pin.encode()).hexdigest()
+    users[username]["pin"] = new_pin
     with open("users.txt", "w") as f:
         for u, data in users.items():
-            f.write(f"{u}||{data['email']}||{data['pin_hash']}||{data['key']}\n")
+            f.write(f"{u}||{data['email']}||{data['pin']}\n")
 
-def generate_key():
-    return Fernet.generate_key().decode()
-
-def encrypt_password(password, key):
-    cipher = Fernet(key.encode())
-    return cipher.encrypt(password.encode()).decode()
-
-def decrypt_password(enc_password, key):
-    cipher = Fernet(key.encode())
-    return cipher.decrypt(enc_password.encode()).decode()
-
-def generate_password(length=12):
-    chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
-    return "".join(random.choice(chars) for _ in range(length))
-
-# ------------------------
-# ROUTES
-# ------------------------
 @app.route("/")
 def home():
     return render_template("base.html")
@@ -63,8 +56,7 @@ def register():
         users = get_users()
         if username in users:
             return "⚠️ Username already exists!"
-        key = generate_key()
-        save_user(username, email, pin, key)
+        save_user(username, email, pin)
         return f"✅ Account created for {username}. <a href='/login'>Login</a>"
     return render_template("signup.html")
 
@@ -74,7 +66,7 @@ def login():
         username = request.form["username"].strip()
         pin = request.form["pin"].strip()
         users = get_users()
-        if username in users and hashlib.sha256(pin.encode()).hexdigest() == users[username]["pin_hash"]:
+        if username in users and users[username]["pin"] == pin:
             session["username"] = username
             return redirect(url_for("dashboard"))
         else:
@@ -85,123 +77,30 @@ def login():
 def dashboard():
     if "username" not in session:
         return redirect(url_for("login"))
-
-    username = session["username"]
-    users = get_users()
-    key = users[username]["key"]
-
-    filename = f"passwords_{username}.txt"
+    key = load_key()
+    filename = f"passwords_{session['username']}.txt"
     passwords = []
     if os.path.exists(filename):
         with open(filename, "r") as f:
             for line in f:
                 if "||" in line:
                     site, enc_pass = line.strip().split("||")
-                    try:
-                        dec_pass = decrypt_password(enc_pass, key)
-                    except:
-                        dec_pass = "ERROR"
-                    passwords.append({"site": site, "password": dec_pass})
-    return render_template("dashboard.html", username=username, passwords=passwords)
+                    dec_pass = decrypt_password(enc_pass, key)
+                    passwords.append((site, dec_pass))
+    return render_template("dashboard.html", username=session["username"], passwords=passwords)
 
 @app.route("/add", methods=["POST"])
 def add_password():
     if "username" not in session:
         return redirect(url_for("login"))
-
-    username = session["username"]
-    users = get_users()
-    key = users[username]["key"]
-
+    key = load_key()
+    filename = f"passwords_{session['username']}.txt"
     site = request.form["website"]
     password = request.form["password"]
     enc_pass = encrypt_password(password, key)
-
-    filename = f"passwords_{username}.txt"
     with open(filename, "a") as f:
         f.write(f"{site}||{enc_pass}\n")
-
     return redirect(url_for("dashboard"))
-
-@app.route("/delete/<site>")
-def delete_password(site):
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    username = session["username"]
-    filename = f"passwords_{username}.txt"
-    if os.path.exists(filename):
-        lines = []
-        with open(filename, "r") as f:
-            lines = f.readlines()
-        with open(filename, "w") as f:
-            for line in lines:
-                if not line.startswith(site + "||"):
-                    f.write(line)
-    return redirect(url_for("dashboard"))
-
-@app.route("/edit/<site>", methods=["GET", "POST"])
-def edit_password(site):
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    username = session["username"]
-    users = get_users()
-    key = users[username]["key"]
-    filename = f"passwords_{username}.txt"
-
-    if request.method == "POST":
-        new_password = request.form["password"]
-        enc_pass = encrypt_password(new_password, key)
-        lines = []
-        with open(filename, "r") as f:
-            lines = f.readlines()
-        with open(filename, "w") as f:
-            for line in lines:
-                if line.startswith(site + "||"):
-                    f.write(f"{site}||{enc_pass}\n")
-                else:
-                    f.write(line)
-        return redirect(url_for("dashboard"))
-
-    current_password = ""
-    if os.path.exists(filename):
-        with open(filename, "r") as f:
-            for line in f:
-                if line.startswith(site + "||"):
-                    enc_pass = line.strip().split("||")[1]
-                    current_password = decrypt_password(enc_pass, key)
-    return render_template("edit.html", site=site, password=current_password)
-
-@app.route("/export_csv")
-def export_csv():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    username = session["username"]
-    users = get_users()
-    key = users[username]["key"]
-    filename = f"passwords_{username}.txt"
-
-    output = []
-    if os.path.exists(filename):
-        with open(filename, "r") as f:
-            for line in f:
-                if "||" in line:
-                    site, enc_pass = line.strip().split("||")
-                    try:
-                        dec_pass = decrypt_password(enc_pass, key)
-                    except:
-                        dec_pass = "ERROR"
-                    output.append([site, dec_pass])
-
-    def generate():
-        yield "Website,Password\n"
-        for row in output:
-            yield f"{row[0]},{row[1]}\n"
-
-    return Response(generate(), mimetype="text/csv",
-                    headers={"Content-Disposition": f"attachment; filename={username}_passwords.csv"})
 
 @app.route("/logout")
 def logout():
