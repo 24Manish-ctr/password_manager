@@ -2,11 +2,11 @@
 {% block content %}
 <h2>🔒 Saved Passwords</h2>
 
-<!-- Password Generator Form -->
-<form action="{{ url_for('add_password') }}" method="POST">
+<!-- Password Generator & Add Form -->
+<form action="{{ url_for('add_password') }}" method="POST" class="password-form">
     <input type="text" name="website" placeholder="Website" required>
     <input type="text" name="password" id="password" placeholder="Password" required>
-    <button type="button" onclick="document.getElementById('password').value='{{ generate_password() }}'">Generate</button>
+    <button type="button" onclick="generatePassword()">Generate</button>
     <button type="submit">Add</button>
 </form>
 
@@ -14,48 +14,69 @@
 <input type="text" id="search" placeholder="Search website..." onkeyup="filterTable()">
 
 <!-- Saved Passwords Table -->
-<table border="1">
-    <tr>
-        <th>Website</th>
-        <th>Password</th>
-        <th>Actions</th>
-    </tr>
+<table>
+    <thead>
+        <tr>
+            <th>Website</th>
+            <th>Password</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
     {% for pw in passwords %}
-    <tr>
-        <td>{{ pw.site }}</td>
-        <td>
-            <span id="pw-{{ pw.site }}" style="display:none">{{ pw.password }}</span>
-            <button type="button" onclick="togglePassword('{{ pw.site }}')">View</button>
-        </td>
-        <td>
-            <a href="{{ url_for('edit_password', site=pw.site) }}">Edit</a> |
-            <form action="{{ url_for('delete_password', site=pw.site) }}" method="POST" style="display:inline;">
-                <button type="submit">Delete</button>
-            </form> |
-            <button onclick="navigator.clipboard.writeText('{{ pw.password }}')">Copy</button>
-        </td>
-    </tr>
+        <tr>
+            <td>{{ pw.site }}</td>
+            <td>
+                <span class="password-text" id="pw-{{ loop.index }}">{{ pw.password }}</span>
+                <button type="button" onclick="togglePassword({{ loop.index }})">View</button>
+            </td>
+            <td>
+                <a class="edit-btn" href="{{ url_for('edit_password', site=pw.site) }}">Edit</a>
+                <form action="{{ url_for('delete_password', site=pw.site) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="delete-btn">Delete</button>
+                </form>
+                <button onclick="copyPassword('{{ pw.password }}')" class="copy-btn">Copy</button>
+            </td>
+        </tr>
     {% endfor %}
+    </tbody>
 </table>
 
 <script>
-function filterTable() {
-    let input = document.getElementById('search').value.toLowerCase();
-    let rows = document.querySelectorAll('table tr');
-    rows.forEach((row, index) => {
-        if(index === 0) return;
-        let site = row.cells[0].textContent.toLowerCase();
-        row.style.display = site.includes(input) ? '' : 'none';
+// ---------------- Password Generator ----------------
+function generatePassword() {
+    fetch("{{ url_for('generate_pass') }}")
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById('password').value = data;
     });
 }
 
-function togglePassword(site) {
-    let el = document.getElementById('pw-' + site);
-    if(el.style.display === 'none') {
-        el.style.display = 'inline';
+// ---------------- Copy Password ----------------
+function copyPassword(password) {
+    navigator.clipboard.writeText(password)
+        .then(() => alert('Password copied!'))
+        .catch(() => alert('Failed to copy.'));
+}
+
+// ---------------- Toggle Password Visibility ----------------
+function togglePassword(index) {
+    let pwElem = document.getElementById('pw-' + index);
+    if (pwElem.type === 'password') {
+        pwElem.type = 'text';
     } else {
-        el.style.display = 'none';
+        pwElem.type = 'text'; // Already text, you can implement masking if needed
     }
+}
+
+// ---------------- Search Filter ----------------
+function filterTable() {
+    let input = document.getElementById('search').value.toLowerCase();
+    let rows = document.querySelectorAll('table tbody tr');
+    rows.forEach(row => {
+        let site = row.cells[0].textContent.toLowerCase();
+        row.style.display = site.includes(input) ? '' : 'none';
+    });
 }
 </script>
 {% endblock %}
