@@ -1,8 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, session, Response, flash
-import os, random, hashlib, csv
+import os
+import random
+import hashlib
+import csv
 from cryptography.fernet import Fernet
 from datetime import datetime
 
+# ------------------------
+# FLASK APP SETUP
+# ------------------------
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
@@ -132,7 +138,6 @@ def delete_password(site):
     username = session["username"]
     filename = f"passwords_{username}.txt"
     if os.path.exists(filename):
-        lines = []
         with open(filename, "r") as f:
             lines = f.readlines()
         with open(filename, "w") as f:
@@ -154,7 +159,6 @@ def edit_password(site):
     if request.method == "POST":
         new_password = request.form["password"]
         enc_pass = encrypt_password(new_password, key)
-        lines = []
         with open(filename, "r") as f:
             lines = f.readlines()
         with open(filename, "w") as f:
@@ -165,7 +169,6 @@ def edit_password(site):
                     f.write(line)
         return redirect(url_for("dashboard"))
 
-    # GET method
     current_password = ""
     if os.path.exists(filename):
         with open(filename, "r") as f:
@@ -223,5 +226,8 @@ def reset_pin():
         return render_template("reset.html", username=username, new_pin=new_pin)
     return render_template("reset.html")
 
+# ------------------------
+# MAIN
+# ------------------------
 if __name__ == "__main__":
     app.run(debug=True)
