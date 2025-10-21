@@ -1,7 +1,7 @@
 import csv
 from flask import Response
 
-@app.route("/export_csv")
+app.route("/export_csv")
 def export_csv():
     if "username" not in session:
         return redirect(url_for("login"))
