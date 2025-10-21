@@ -1,14 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, session, Response, flash
-import os
-import random
-import hashlib
-import csv
+from flask import Flask, render_template, request, redirect, url_for, session, Response
+import os, random, hashlib, csv
 from cryptography.fernet import Fernet
-from datetime import datetime
 
-# ------------------------
-# FLASK APP SETUP
-# ------------------------
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
@@ -138,6 +131,7 @@ def delete_password(site):
     username = session["username"]
     filename = f"passwords_{username}.txt"
     if os.path.exists(filename):
+        lines = []
         with open(filename, "r") as f:
             lines = f.readlines()
         with open(filename, "w") as f:
@@ -159,6 +153,7 @@ def edit_password(site):
     if request.method == "POST":
         new_password = request.form["password"]
         enc_pass = encrypt_password(new_password, key)
+        lines = []
         with open(filename, "r") as f:
             lines = f.readlines()
         with open(filename, "w") as f:
@@ -222,12 +217,8 @@ def reset_pin():
             return render_template("reset.html", error="❌ Username not found!")
         new_pin = str(random.randint(1000, 9999))
         update_user_pin(username, new_pin)
-        # Here you can add email sending logic for OTP
         return render_template("reset.html", username=username, new_pin=new_pin)
     return render_template("reset.html")
 
-# ------------------------
-# MAIN
-# ------------------------
 if __name__ == "__main__":
     app.run(debug=True)
