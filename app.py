@@ -109,14 +109,14 @@ def dashboard():
     
     username = session["username"]
     key = load_user_key(username)
-    filename = f"passwords_{username}.txt"
+    file_path = os.path.join(DATA_FOLDER, f"passwords_{username}.txt")
     passwords = []
 
     # Ensure file exists
-    if not os.path.exists(filename):
-        open(filename, "w").close()
+    if not os.path.exists(file_path):
+        open(file_path, "w").close()
 
-    with open(filename, "r") as f:
+    with open(file_path, "r") as f:
         for line in f:
             if "||" in line:
                 site, enc_pass = line.strip().split("||")
@@ -130,17 +130,8 @@ def dashboard():
         "dashboard.html",
         username=username,
         passwords=passwords,
-        generate_password=generate_password  # <-- function passed here
+        generate_password=generate_password
     )
-
-# Remove this old route:
-# @app.route("/generate_password")
-# def generate_pass():
-#     return generate_password(16)
-
-if __name__ == "__main__":
-    app.run(debug=True)
-
 
 # ---------- ADD PASSWORD ----------
 @app.route("/add", methods=["POST"])
@@ -256,10 +247,6 @@ def reset_pin():
         return render_template("reset.html", username=username, new_pin=new_pin)
     return render_template("reset.html")
 
-# ---------- PASSWORD GENERATOR ----------
-@app.route("/generate_password")
-def generate_pass():
-    return generate_password(16)
-
+# ---------- MAIN ----------
 if __name__=="__main__":
     app.run(debug=True)
