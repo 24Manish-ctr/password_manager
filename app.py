@@ -8,10 +8,10 @@ app.secret_key = "supersecretkey"
 
 # ------------------- USER & KEY MANAGEMENT ------------------- #
 def get_users():
-    if not os.path.exists("data/users.txt"):
+    if not os.path.exists("users.txt"):
         return {}
     users = {}
-    with open("data/users.txt", "r") as f:
+    with open("users.txt", "r") as f:
         for line in f:
             if "||" in line:
                 u, e, p = line.strip().split("||")
@@ -19,26 +19,26 @@ def get_users():
     return users
 
 def save_user(username, email, hashed_pin):
-    with open("data/users.txt", "a") as f:
+    with open("users.txt", "a") as f:
         f.write(f"{username}||{email}||{hashed_pin}\n")
 
 def update_user_pin(username, new_hashed_pin):
     users = get_users()
     users[username]["pin"] = new_hashed_pin
-    with open("data/users.txt", "w") as f:
+    with open("users.txt", "w") as f:
         for u, data in users.items():
             f.write(f"{u}||{data['email']}||{data['pin']}\n")
 
 def create_user_key(username):
     key = Fernet.generate_key()
-    with open(f"data/{username}_key.key", "wb") as f:
+    with open(f"{username}_key.key", "wb") as f:
         f.write(key)
     return key
 
 def load_user_key(username):
-    if not os.path.exists(f"data/{username}_key.key"):
+    if not os.path.exists(f"{username}_key.key"):
         return create_user_key(username)
-    with open(f"data/{username}_key.key", "rb") as f:
+    with open(f"{username}_key.key", "rb") as f:
         return f.read()
 
 def encrypt_password(password, key):
@@ -95,10 +95,10 @@ def login():
 def dashboard():
     if "username" not in session:
         return redirect(url_for("login"))
-
+    
     username = session["username"]
     key = load_user_key(username)
-    filename = f"data/passwords_{username}.txt"
+    filename = f"passwords_{username}.txt"
     passwords = []
 
     if not os.path.exists(filename):
@@ -116,32 +116,6 @@ def dashboard():
 
     return render_template("dashboard.html", username=username, passwords=passwords)
 
-# ---------- VIEW PASSWORDS ----------
-@app.route("/view")
-def view_passwords():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    username = session["username"]
-    key = load_user_key(username)
-    filename = f"data/passwords_{username}.txt"
-    passwords = []
-
-    if not os.path.exists(filename):
-        open(filename, "w").close()
-
-    with open(filename, "r") as f:
-        for line in f:
-            if "||" in line:
-                site, enc_pass = line.strip().split("||")
-                try:
-                    dec_pass = decrypt_password(enc_pass, key)
-                except:
-                    dec_pass = "Error decrypting"
-                passwords.append({"site": site, "password": dec_pass})
-
-    return render_template("view.html", passwords=passwords)
-
 # ---------- ADD PASSWORD ----------
 @app.route("/add", methods=["POST"])
 def add_password():
@@ -153,7 +127,7 @@ def add_password():
     password = request.form["password"]
     key = load_user_key(username)
     enc_pass = encrypt_password(password, key)
-    filename = f"data/passwords_{username}.txt"
+    filename = f"passwords_{username}.txt"
 
     with open(filename, "a") as f:
         f.write(f"{site}||{enc_pass}\n")
@@ -169,7 +143,7 @@ def edit_password(site):
 
     username = session["username"]
     key = load_user_key(username)
-    filename = f"data/passwords_{username}.txt"
+    filename = f"passwords_{username}.txt"
 
     if not os.path.exists(filename):
         open(filename, "w").close()
@@ -207,7 +181,7 @@ def delete_password(site):
         return redirect(url_for("login"))
 
     username = session["username"]
-    filename = f"data/passwords_{username}.txt"
+    filename = f"passwords_{username}.txt"
 
     if not os.path.exists(filename):
         open(filename, "w").close()
@@ -220,6 +194,32 @@ def delete_password(site):
                 f.write(line)
     flash(f"Deleted password for {site} ✅")
     return redirect(url_for("dashboard"))
+
+# ---------- VIEW PASSWORDS ----------
+@app.route("/view")
+def view_passwords():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session["username"]
+    key = load_user_key(username)
+    filename = f"passwords_{username}.txt"
+    passwords = []
+
+    if not os.path.exists(filename):
+        open(filename, "w").close()
+
+    with open(filename, "r") as f:
+        for line in f:
+            if "||" in line:
+                site, enc_pass = line.strip().split("||")
+                try:
+                    dec_pass = decrypt_password(enc_pass, key)
+                except:
+                    dec_pass = "Error decrypting"
+                passwords.append({"site": site, "password": dec_pass})
+
+    return render_template("view.html", passwords=passwords)
 
 # ---------- LOGOUT ----------
 @app.route("/logout")
