@@ -49,31 +49,22 @@ main {
 }
 
 /* ----------------- Forms ----------------- */
-form input[type="text"],
-form input[type="password"],
-form input[type="email"] {
+form input[type="text"], form input[type="password"], form input[type="email"] {
     padding: 8px;
-    margin: 5px 0;
+    margin: 5px 5px 5px 0;
     border: 1px solid #ccc;
     border-radius: 4px;
-    width: 100%;
-    box-sizing: border-box;
 }
 
 form button {
     padding: 8px 12px;
-    margin: 5px 2px 5px 0;
+    margin: 5px 5px 5px 0;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
 }
 
-form button:hover {
-    opacity: 0.9;
-}
-
-/* Button colors */
 button[type="submit"] {
     background-color: #4CAF50;
     color: white;
@@ -84,7 +75,6 @@ button[type="button"] {
     color: white;
 }
 
-/* ----------------- Table ----------------- */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -92,13 +82,10 @@ table {
     background: white;
 }
 
-table, th, td {
-    border: 1px solid #ddd;
-}
-
 th, td {
-    padding: 12px;
+    padding: 10px;
     text-align: left;
+    border-bottom: 1px solid #ddd;
 }
 
 tr:nth-child(even) {
@@ -109,68 +96,28 @@ tr:hover {
     background-color: #f1f1f1;
 }
 
-/* ----------------- Search ----------------- */
 #search {
-    padding: 10px;
-    margin-bottom: 15px;
     width: 80%;
     max-width: 400px;
-    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    padding: 10px;
     border-radius: 8px;
+    border: 1px solid #ccc;
     font-size: 1rem;
 }
 
-/* ----------------- Cards and Alerts ----------------- */
-.card {
-    background: white;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    max-width: 450px;
-    margin: 40px auto;
-    text-align: center;
-}
-
-.alert {
-    background-color: #e7f3fe;
-    color: #31708f;
-    padding: 12px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    border: 1px solid #bce8f1;
-}
-
-/* ----------------- Buttons ----------------- */
-.btn {
-    padding: 6px 14px;
-    margin: 2px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-}
-
-.edit-btn { background-color: #4CAF50; color: white; border: none; }
-.delete-btn { background-color: #f44336; color: white; border: none; }
-.copy-btn { background-color: #2196F3; color: white; border: none; }
-.view-btn { background-color: #FF9800; color: white; border: none; }
-.back-btn { margin-top: 20px; }
-
-/* ----------------- View Page Styling ----------------- */
-.view-container {
-    width: 70%;
-    margin: 40px auto;
-    background: #ffffffcc; /* semi-transparent white */
-    padding: 30px;
+.card, .view-container {
+    background: #ffffffcc;
+    padding: 20px;
     border-radius: 15px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    max-width: 70%;
+    margin: 30px auto;
     text-align: center;
 }
 
-.view-container h2 {
+.view-container h2, .card h3 {
     color: #333;
-    margin-bottom: 10px;
 }
 
 .view-container .sub-text {
@@ -179,16 +126,27 @@ tr:hover {
     font-size: 0.95rem;
 }
 
-.view-container table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
+.btn {
+    padding: 6px 12px;
+    margin: 2px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
 }
 
-.view-container th, .view-container td {
-    padding: 12px;
-    border-bottom: 1px solid #ddd;
-}
+.edit-btn { background-color: #4CAF50; color: white; border: none; }
+.delete-btn { background-color: #f44336; color: white; border: none; }
+.copy-btn { background-color: #2196F3; color: white; border: none; }
+.btn:hover { opacity: 0.85; }
 
-.view-container tr:nth-child(even) { background-color: #f9f9f9; }
-.view-container tr:hover { background-color: #f1f1f1; }
+.back-btn { margin-top: 20px; }
+
+.alert {
+    background-color: #e7f3fe;
+    color: #31708f;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #bce8f1;
+}
