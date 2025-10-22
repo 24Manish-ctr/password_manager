@@ -106,15 +106,17 @@ def login():
 def dashboard():
     if "username" not in session:
         return redirect(url_for("login"))
+    
     username = session["username"]
     key = load_user_key(username)
-    file_path = os.path.join(DATA_FOLDER, f"passwords_{username}.txt")
+    filename = f"passwords_{username}.txt"
     passwords = []
 
-    if not os.path.exists(file_path):
-        open(file_path,"w").close()
+    # Ensure file exists
+    if not os.path.exists(filename):
+        open(filename, "w").close()
 
-    with open(file_path,"r") as f:
+    with open(filename, "r") as f:
         for line in f:
             if "||" in line:
                 site, enc_pass = line.strip().split("||")
@@ -122,8 +124,23 @@ def dashboard():
                     dec_pass = decrypt_password(enc_pass, key)
                 except:
                     dec_pass = "Error decrypting"
-                passwords.append({"site": site,"password": dec_pass})
-    return render_template("dashboard.html", username=username, passwords=passwords)
+                passwords.append({"site": site, "password": dec_pass})
+
+    return render_template(
+        "dashboard.html",
+        username=username,
+        passwords=passwords,
+        generate_password=generate_password  # <-- function passed here
+    )
+
+# Remove this old route:
+# @app.route("/generate_password")
+# def generate_pass():
+#     return generate_password(16)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
 
 # ---------- ADD PASSWORD ----------
 @app.route("/add", methods=["POST"])
