@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-  <h3>Login</h3>
-  <form method="POST">
-    <input name="username" placeholder="username" required>
-    <input name="pin" placeholder="PIN" type="password" required>
-    <button type="submit">Login</button>
-  </form>
-  <p><a href="{{ url_for('register') }}">Create account</a> | <a href="{{ url_for('reset_pin') }}">Reset PIN</a></p>
+    <h3 class="text-center">🔑 Login</h3>
+    <form method="POST">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="pin" placeholder="PIN" required>
+        <button type="submit">Login</button>
+    </form>
+    <p class="text-center mt-2"><a href="{{ url_for('reset_pin') }}">Forgot PIN?</a></p>
 </div>
 {% endblock %}
+
