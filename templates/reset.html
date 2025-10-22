@@ -1,24 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card center-card p-4 col-md-6 mx-auto">
-  <h3 class="text-center">Reset / Forgot PIN</h3>
+<div class="card">
+  <h3>Reset PIN</h3>
   {% if new_pin %}
-    <div class="alert alert-success">
-      ✅ PIN reset for <strong>{{ username }}</strong>.<br>
-      Your new PIN is: <strong style="font-size:1.05rem">{{ new_pin }}</strong><br>
-      Please save it — you'll need it to login.
-    </div>
-    <p><a class="btn btn-outline-primary" href="{{ url_for('login') }}">Go to Login</a></p>
+    <div class="alert">New PIN for <strong>{{ username }}</strong>: <strong>{{ new_pin }}</strong></div>
+    <p><a href="{{ url_for('login') }}">Login</a></p>
   {% else %}
-    {% if error %}
-      <div class="alert alert-danger">{{ error }}</div>
-    {% endif %}
-    <form method="post">
-      <label>Enter your username</label>
-      <input type="text" name="username" class="form-control" placeholder="username" required>
-      <button class="btn btn-primary mt-2" type="submit">Reset PIN</button>
+    {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+    <form method="POST">
+      <input name="username" placeholder="username" required>
+      <button type="submit">Reset PIN</button>
     </form>
-    <p class="text-muted mt-2">If username exists, a new 4-digit PIN will be generated and shown here.</p>
   {% endif %}
 </div>
 {% endblock %}
