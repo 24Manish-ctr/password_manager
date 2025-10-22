@@ -117,3 +117,22 @@ tr:hover {
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
+/* ----------------- Cards and Alerts ----------------- */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    max-width: 400px;
+    margin: 30px auto;
+}
+
+.alert {
+    background-color: #e7f3fe;
+    color: #31708f;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #bce8f1;
+}
