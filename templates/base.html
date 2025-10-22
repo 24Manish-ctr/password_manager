@@ -1,31 +1,38 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Password Manager</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <title>Password Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
-  <header>
+<header>
     <h1>Password Manager</h1>
     {% if session.get('username') %}
-      <nav><a href="{{ url_for('dashboard') }}">Dashboard</a> | <a href="{{ url_for('logout') }}">Logout</a></nav>
+    <nav>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a> |
+        <a href="{{ url_for('view_passwords') }}">View Passwords</a> |
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
     {% else %}
-      <nav><a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Sign Up</a></nav>
+    <nav>
+        <a href="{{ url_for('login') }}">Login</a> |
+        <a href="{{ url_for('register') }}">Sign Up</a>
+    </nav>
     {% endif %}
-  </header>
-
-  <main>
+</header>
+<main>
     {% with messages = get_flashed_messages() %}
-      {% if messages %}
+    {% if messages %}
         <ul class="flash-messages">
-          {% for msg in messages %}
+        {% for msg in messages %}
             <li>{{ msg }}</li>
-          {% endfor %}
+        {% endfor %}
         </ul>
-      {% endif %}
+    {% endif %}
     {% endwith %}
     {% block content %}{% endblock %}
-  </main>
+</main>
 </body>
 </html>
